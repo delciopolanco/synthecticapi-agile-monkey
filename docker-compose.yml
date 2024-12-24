@@ -1,0 +1,40 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_DB: customer
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  syntheticapi:
+    image: crm-application:latest
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_APPLICATION_NAME=syntheticapi
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/customer
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID=Ov23liEe8FMIjOPec6L6
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET=b91fc4fe11e4a0f660115b3fa960a3cf1f4ea79e
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_SCOPE=user:email
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=TRACE
+      - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+    depends_on:
+      - postgres
+    volumes:
+      - ./upload:/app/upload
+
+volumes:
+  postgres_data:
