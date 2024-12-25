@@ -66,10 +66,10 @@ public class UserController {
     @PutMapping("/{id}/admin")
     public ResponseEntity<User> changeAdminStatus(@PathVariable Long id, @RequestParam boolean admin) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserName = authentication.getName();
+        String username = authentication.getName();
 
         User user = userService.getUserById(id);
-        if (user.getUsername().equals(currentUserName)) {
+        if (user.getEmail().equals(username)) {
             SecurityContextHolder.clearContext();
         }
 

@@ -28,10 +28,6 @@ public class UserService {
         return userRepository.findById(id).orElse(null);
     }
 
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username).orElse(null);
-    }
-
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email).orElse(null);
     }
@@ -43,7 +39,6 @@ public class UserService {
     public User updateUser(Long id, User userDetails) {
         User existingUser = getUserById(id);
         if (existingUser != null) {
-            existingUser.setUsername(userDetails.getUsername());
             existingUser.setEmail(userDetails.getEmail());
             existingUser.setName(userDetails.getName());
             existingUser.setRoles(userDetails.getRoles());
@@ -64,7 +59,7 @@ public class UserService {
         User user = getUserById(id);
         if (user != null) {
             Set<Roles> roles = new HashSet<>();
-            roles.add(isAdmin ? Roles.ADMIN : Roles.USER);
+            roles.add(isAdmin ? Roles.ROLE_ADMIN : Roles.ROLE_USER);
             user.setRoles(roles);
             return userRepository.save(user);
         }

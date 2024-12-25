@@ -25,8 +25,15 @@ public class SecurityConfig {
         http.authorizeHttpRequests(auth -> {
             auth.requestMatchers("/api/v1/customer/**").hasAnyRole("USER", "ADMIN");
             auth.requestMatchers("/api/v1/user/**").hasRole("ADMIN");
+            auth.requestMatchers("/auth/status").permitAll();
             auth.anyRequest().authenticated();
-        }).oauth2Login(oauth2Login -> oauth2Login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(customOAuth2Service))).formLogin(withDefaults());
+        }).oauth2Login(oauth2Login -> oauth2Login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(customOAuth2Service)).defaultSuccessUrl("/swagger-ui/index.html", true)).formLogin(withDefaults()).logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
+        ).csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

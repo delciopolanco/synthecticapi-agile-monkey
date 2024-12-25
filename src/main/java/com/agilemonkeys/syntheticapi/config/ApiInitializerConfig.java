@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+import java.util.Optional;
 
 @Configuration
 public class ApiInitializerConfig {
@@ -17,15 +18,15 @@ public class ApiInitializerConfig {
         return args -> {
             // Default Users
 
-            Customer customer1 = new Customer("Delcio", "Polanco", "primary_photo.jpg");
+            Customer customer1 = new Customer("Delcio", "Polanco", "0011898881");
             customer1.setCreatedBy("Admin");
             customer1.setLastModifiedBy("Admin");
 
-            Customer customer2 = new Customer("Jayden", "Polanco", "jayden_photo.jpg");
-            customer2.setCreatedBy("Admin");
-            customer2.setLastModifiedBy("Admin");
+            Optional<Customer> existingCustomer = cutomerRepository.findById(1L);
 
-            cutomerRepository.saveAll(List.of(customer1, customer2));
+            if (existingCustomer.isEmpty()) {
+                cutomerRepository.saveAll(List.of(customer1));
+            }
         };
     }
 }

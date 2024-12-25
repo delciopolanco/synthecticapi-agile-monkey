@@ -4,26 +4,6 @@
 
 The purpose of this README file is to explain how to run this project from scratch. You will need minimal configuration on your end to run the service and start testing.
 
-## Prerequisites
-
-- Docker installed on your machine
-- Docker Compose installed on your machine
-- A GitHub account for OAuth 2.0 authentication
-
-### Including user as ADMIN
-
-There is an v1/user/ route that is only allowed for priviliged users, to be able to access you will need to add your github email account into the Default Admin Roles of this app.
-
-**Steps:**
-
-Go to ./src/main/resources/application.properties
-
-add your email into the `app.admin.emails`, each email needs to be separated by comma.
-save the file, once you login to the swagger page will the email will have an ADMIN role by default.
-
-`ex:
-app.admin.emails=my@email.com,mysecond@mail.com`
-
 ## Technologies Used
 
 This project uses the following technologies:
@@ -36,8 +16,37 @@ This project uses the following technologies:
 - **Docker Compose**: Used to define and run multi-container Docker applications.
 - **pgAdmin**: A web-based database management tool for PostgreSQL.
 - **Swagger**: Used for API documentation and testing.
-- **OAuth 2.0**: Used for authentication via GitHub.
+- **OAuth 2.0**: Used for authentication via Google.
 - **GitHub Actions**: Used for continuous integration and deployment.
+
+## Prerequisites
+
+- Docker installed on your machine
+- Docker Compose installed on your machine
+- A google account for OAuth 2.0 authentication
+- Maven
+
+### Including user as ADMIN
+
+There is an v1/user/ route that is only allowed for priviliged users, to be able to access you will need to add your google email account into the Default Admin Roles of this app.
+
+**Steps:**
+
+Go to ./src/main/resources/application.properties
+
+add your email into the `app.admin.emails`, each email needs to be separated by comma.
+save the file, once you login to the swagger page will the email will have an ADMIN role by default.
+
+`ex:
+app.admin.emails=my@email.com,mysecond@mail.com`
+
+## Building the Application
+
+Before running the application with Docker Compose, you need to build the application using Maven. This will create the necessary JAR file in the `target` directory.
+
+```sh
+mvn clean install
+```
 
 ## Log in to Docker
 
@@ -55,17 +64,18 @@ Use Docker Compose to build the Docker image and run the containers. This will s
 docker-compose up
 ```
 
+This will start the following services:
+
+- postgres: PostgreSQL database
+- flyway: Flyway for database migrations
+- syntheticapi: The main application
+
 ## Access the Endpoints
 
-Once the Docker container is running, you can access the endpoints using the swagger documentation URLs, We have chosen Github as our Oauth2 provider, so you have sign in using a github account, so go to:
+Once the services are up and running, you can access the application at http://localhost:8080. The Swagger UI is available at
+http://localhost:8080/swagger-ui/index.html.
 
-**Endpoint:**
-
-```http
-http://localhost:8080/swagger-ui/index.html
-```
-
-Click the link to: Login with OAuth 2.0: **Github**.
+Click the link to: Login with OAuth 2.0: **GOOGLE**.
 
 After log in you will have access to all the list of endpoints, by default any user will have a USER role, in case you
 need to have access to the v1/user endpoints will need to have an ADMIN role assign, previously explain in the **Including user as ADMIN section**, otherwise when
@@ -197,3 +207,9 @@ These steps will help you build, run, and test this application locally using Do
 ## GitHub Actions
 
 This project is set up to use GitHub Actions for continuous integration. The workflow file is located at `.github/workflows/` ci.yml and includes steps to build the project, run tests, and build the Docker image.
+
+## Stopping the Application
+
+```bash
+docker-compose down
+```

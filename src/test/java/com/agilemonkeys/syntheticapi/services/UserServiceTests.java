@@ -1,10 +1,7 @@
 package com.agilemonkeys.syntheticapi.services;
 
-import com.agilemonkeys.syntheticapi.entities.BaseEntity;
 import com.agilemonkeys.syntheticapi.entities.User;
 import com.agilemonkeys.syntheticapi.repositories.UserRepository;
-import com.agilemonkeys.syntheticapi.utils.CustomerNotFoundExceptions;
-import com.agilemonkeys.syntheticapi.utils.UserNotFoundExceptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,7 +14,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class UserServiceTests {

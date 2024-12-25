@@ -17,9 +17,6 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
-
     @Column(nullable = false)
     private String name;
 
@@ -30,5 +27,5 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
-    private Set<Roles> roles = Set.of(Roles.USER);
+    private Set<Roles> roles = Set.of(Roles.ROLE_USER);
 }

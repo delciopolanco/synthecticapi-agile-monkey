@@ -1,6 +1,6 @@
 package com.agilemonkeys.syntheticapi.entities;
 
 public enum Roles {
-    ADMIN,
-    USER
+    ROLE_USER,
+    ROLE_ADMIN
 }

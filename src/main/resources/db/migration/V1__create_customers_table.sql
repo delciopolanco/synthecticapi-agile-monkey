@@ -1,6 +1,7 @@
 -- Create customers table
 CREATE TABLE customers (
     id SERIAL PRIMARY KEY,
+    customer_id VARCHAR(100) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
     surname VARCHAR(100) NOT NULL,
     photo VARCHAR(255),
