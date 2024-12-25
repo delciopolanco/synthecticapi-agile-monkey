@@ -26,7 +26,7 @@ public class SecurityConfig {
             auth.requestMatchers("/api/v1/customer/**").hasAnyRole("USER", "ADMIN");
             auth.requestMatchers("/api/v1/user/**").hasRole("ADMIN");
             auth.anyRequest().authenticated();
-        }).oauth2Login(oauth2Login -> oauth2Login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(customOAuth2Service))).formLogin(withDefaults()).csrf(AbstractHttpConfigurer::disable);
+        }).oauth2Login(oauth2Login -> oauth2Login.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint.userService(customOAuth2Service))).formLogin(withDefaults());
 
         return http.build();
     }

@@ -4,35 +4,50 @@ services:
     image: postgres:13
     container_name: postgres
     environment:
-      POSTGRES_DB: customer
+      POSTGRES_DB: agile_monkeys
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "agile_monkeys", "-U", "root"]
+      interval: 5s
+      timeout: 1s
+      retries: 2
 
+  flyway:
+    image: flyway/flyway:11.1.0-alpine
+    command: -url=jdbc:postgresql://postgres:5432/agile_monkeys -schemas=public -user=root -password=root -locations=filesystem:/flyway/migrations migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
   syntheticapi:
     image: crm-application:latest
     build: .
     ports:
       - "8080:8080"
     environment:
-      - SPRING_APPLICATION_NAME=syntheticapi
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/customer
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
-      - SPRING_JPA_SHOW_SQL=true
-      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
-      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID=Ov23liEe8FMIjOPec6L6
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET=b91fc4fe11e4a0f660115b3fa960a3cf1f4ea79e
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_SCOPE=user:email
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=TRACE
-      - SPRINGDOC_SWAGGER_UI_PATH=/swagger-ui.html
+      SPRING_APPLICATION_NAME: syntheticapi
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/agile_monkeys
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_ID: Ov23liEe8FMIjOPec6L6
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_CLIENT_SECRET: b91fc4fe11e4a0f660115b3fa960a3cf1f4ea79e
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GITHUB_SCOPE: user:email
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: TRACE
+      SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
+      SPRING_FLYWAY_ENABLED: false
     depends_on:
-      - postgres
+      flyway:
+        condition: service_completed_successfully
     volumes:
       - ./upload:/app/upload
 
