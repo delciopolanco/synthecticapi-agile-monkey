@@ -1,6 +1,7 @@
 # Project Setup and Running Guide
 
 ## Introduction
+
 The purpose of this README file is to explain how to run this project from scratch. You will need minimal configuration on your end to run the service and start testing.
 
 ## Prerequisites
@@ -23,6 +24,20 @@ save the file, once you login to the swagger page will the email will have an AD
 `ex:
 app.admin.emails=my@email.com,mysecond@mail.com`
 
+## Technologies Used
+
+This project uses the following technologies:
+
+- **Java**: The primary programming language used for the application.
+- **Spring Boot**: A framework for building Java-based applications.
+- **PostgreSQL**: The relational database used to store data.
+- **Flyway**: A database migration tool.
+- **Docker**: Used to containerize the application and its dependencies.
+- **Docker Compose**: Used to define and run multi-container Docker applications.
+- **pgAdmin**: A web-based database management tool for PostgreSQL.
+- **Swagger**: Used for API documentation and testing.
+- **OAuth 2.0**: Used for authentication via GitHub.
+- **GitHub Actions**: Used for continuous integration and deployment.
 
 ## Log in to Docker
 
@@ -55,7 +70,6 @@ Click the link to: Login with OAuth 2.0: **Github**.
 After log in you will have access to all the list of endpoints, by default any user will have a USER role, in case you
 need to have access to the v1/user endpoints will need to have an ADMIN role assign, previously explain in the **Including user as ADMIN section**, otherwise when
 trying to access v1/user/ endpoints with USER role, the endpoint will respond with a 403 FORBIDDEN error.
-
 
 ### Get All Customers
 
