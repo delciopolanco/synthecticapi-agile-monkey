@@ -109,8 +109,8 @@ POST http://localhost:8080/api/v1/customer
 
 **Form Data:**
 
-- `name`: Customer's name
-- `surname`: Customer's surname
+- `name`: Customer's name (required)
+- `surname`: Customer's surname (required)
 - `file`: Multipart file (image)
 
 ### Update Customer
@@ -123,10 +123,40 @@ PUT http://localhost:8080/api/v1/customer
 
 **Form Data:**
 
-- `id`: Customer's ID
-- `name`: Customer's name
-- `surname`: Customer's surname
+- `id`: Customer's ID (required)
+- `name`: Customer's name (required)
+- `surname`: Customer's surname (required)
 - `file`: Multipart file (image)
+
+### GET Customer image
+
+**Endpoint:**
+
+```http
+GET http://localhost:8080/api/v1/customer/{customerId}/image
+```
+
+Replace `{customerId}` with the actual customer ID.
+
+### PUT Customer image
+
+**Endpoint:**
+
+```http
+PUT http://localhost:8080/api/v1/customer/{customerId}/image
+```
+
+Replace `{customerId}` with the actual customer ID.
+
+### DELETE Customer image
+
+**Endpoint:**
+
+```http
+DELETE http://localhost:8080/api/v1/customer/{customerId}/image
+```
+
+Replace `{customerId}` with the actual customer ID.
 
 User Endpoints
 
@@ -161,7 +191,6 @@ POST http://localhost:8080/api/v1/user
 ```Json
 name: User's name
 email: User's email
-password: User's password
 ```
 
 ### Update User
@@ -175,7 +204,6 @@ PUT http://localhost:8080/api/v1/user/{userId}
 ```Json
 name: User's name
 email: User's email
-password: User's password
 ```
 
 ### Delete User
