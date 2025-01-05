@@ -32,7 +32,7 @@ There is an v1/user/ route that is only allowed for priviliged users, to be able
 
 **Steps:**
 
-Go to ./src/main/resources/application.properties
+Go to ./docker-compose.yml
 
 add your email into the `app.admin.emails`, each email needs to be separated by comma.
 save the file, once you login to the swagger page will the email will have an ADMIN role by default.

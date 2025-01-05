@@ -4,9 +4,9 @@ services:
     image: postgres:13
     container_name: postgres
     environment:
-      POSTGRES_DB: agile_monkeys
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ${SPRING_DATASOURCE_DATABASE}
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -19,7 +19,13 @@ services:
 
   flyway:
     image: flyway/flyway:11.1.0-alpine
-    command: -url=jdbc:postgresql://postgres:5432/agile_monkeys -schemas=public -user=root -password=root -locations=filesystem:/flyway/migrations migrate
+    command: >
+      -url=${SPRING_DATASOURCE_URL}
+      -schemas=public
+      -user=${SPRING_DATASOURCE_USERNAME}
+      -password=${SPRING_DATASOURCE_PASSWORD}
+      -locations=filesystem:/flyway/migrations
+      migrate
     volumes:
       - ./src/main/resources/db/migration:/flyway/migrations
     depends_on:
@@ -32,14 +38,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_APPLICATION_NAME: syntheticapi
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/agile_monkeys
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       SPRING_JPA_SHOW_SQL: true
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: 650353267808-l4meh7lf1l6jmjdill8vmdjh7u9lpfi9.apps.googleusercontent.com
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: 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
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: profile,email
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI: "{baseUrl}/login/oauth2/code/google"
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_NAME: Google
@@ -49,7 +54,7 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOOGLE_USER_NAME_ATTRIBUTE: sub
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: TRACE
       SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui/index.html
-      APP_ADMIN_EMAILS: admin@example.com,delciopolanco@gmail.com
+      APP_ADMIN_EMAILS: ${APP_ADMIN_EMAILS}
     depends_on:
       flyway:
         condition: service_completed_successfully
