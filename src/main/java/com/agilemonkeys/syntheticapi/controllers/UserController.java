@@ -4,12 +4,13 @@ import com.agilemonkeys.syntheticapi.converters.UserDtoConverter;
 import com.agilemonkeys.syntheticapi.dtos.UserDto;
 import com.agilemonkeys.syntheticapi.entities.User;
 import com.agilemonkeys.syntheticapi.services.UserService;
+import com.agilemonkeys.syntheticapi.utils.UserNotFoundExceptions;
+
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -63,15 +64,16 @@ public class UserController {
 
     @PutMapping("/{id}/admin")
     public ResponseEntity<UserDto> changeAdminStatus(@PathVariable Long id, @RequestParam boolean admin) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
         User user = userService.getUserById(id);
-        if (user.getEmail().equals(username)) {
-            SecurityContextHolder.clearContext();
+
+        if (user == null) {
+            throw new UserNotFoundExceptions(String.format("User with id %s does not exist", id));
         }
 
         User updatedUser = userService.changeAdminStatus(id, admin);
-        return ResponseEntity.ok(userDtoConverter.convertToDto(updatedUser));
+        UserDto dto = userDtoConverter.convertToDto(updatedUser);
+
+        return ResponseEntity.ok(dto);
     }
+
 }
