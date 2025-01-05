@@ -5,7 +5,9 @@ import com.agilemonkeys.syntheticapi.dtos.CustomerDto;
 import com.agilemonkeys.syntheticapi.entities.Customer;
 import com.agilemonkeys.syntheticapi.services.CustomerService;
 import com.agilemonkeys.syntheticapi.services.FileService;
+import com.agilemonkeys.syntheticapi.utils.CustomerUniqueException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -67,6 +69,14 @@ public class CustomerController {
         }
 
         Customer customer = new Customer(name, surname, customerId);
+        Customer existingCustomer = customerService.findByCustomerId(customerId);
+
+        if (existingCustomer != null) {
+            throw new CustomerUniqueException(
+                    String.format("Customer with customerId %s already exists", existingCustomer.getCustomerId()));
+        }
+
+        System.out.println(existingCustomer);
 
         if (fileName != null) {
             customer.setPhoto(fileName);
@@ -142,5 +152,10 @@ public class CustomerController {
         customer.setPhoto(null);
         customerService.saveCustomer(customer);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @ResponseStatus(value = HttpStatus.CONFLICT, reason = "Customer already exists")
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public void conflict() {
     }
 }

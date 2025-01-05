@@ -1,5 +1,8 @@
 package com.agilemonkeys.syntheticapi.dtos;
 
+import org.hibernate.validator.constraints.UniqueElements;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,16 +14,18 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CustomerDto {
+  @Valid
 
   private Long id;
 
-  @NotEmpty
+  @NotEmpty(message = "Name is required")
   private String name;
 
-  @NotEmpty
+  @NotEmpty(message = "Surname is required")
   private String surname;
 
-  @NotEmpty
+  @NotEmpty(message = "Customer ID is required")
+  @UniqueElements(message = "Customer ID must be unique")
   private String customerId;
 
   private String photo;

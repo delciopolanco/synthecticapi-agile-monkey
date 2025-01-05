@@ -28,6 +28,10 @@ public class CustomerService {
         return customerRepository.findById(id).orElse(null);
     }
 
+    public Customer findByCustomerId(String customerId) {
+        return customerRepository.findByCustomerId(customerId).orElse(null);
+    }
+
     public Customer saveCustomer(Customer customer) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String currentUserName = authentication.getName();

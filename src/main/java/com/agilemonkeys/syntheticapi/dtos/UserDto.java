@@ -1,5 +1,6 @@
 package com.agilemonkeys.syntheticapi.dtos;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -13,13 +14,15 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UserDto {
 
+  @Valid
+
   private Long id;
 
-  @NotEmpty
+  @NotEmpty(message = "Name is required")
   private String name;
 
-  @NotEmpty
-  @Email
+  @NotEmpty(message = "Email is required")
+  @Email(message = "Email should be valid")
   private String email;
 
 }
