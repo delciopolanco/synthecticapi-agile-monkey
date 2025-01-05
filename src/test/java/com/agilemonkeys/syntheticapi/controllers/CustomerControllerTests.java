@@ -1,6 +1,11 @@
 package com.agilemonkeys.syntheticapi.controllers;
 
+import com.agilemonkeys.syntheticapi.converters.CustomerDtoConverter;
+import com.agilemonkeys.syntheticapi.converters.UserDtoConverter;
+import com.agilemonkeys.syntheticapi.dtos.CustomerDto;
+import com.agilemonkeys.syntheticapi.dtos.UserDto;
 import com.agilemonkeys.syntheticapi.entities.Customer;
+import com.agilemonkeys.syntheticapi.entities.User;
 import com.agilemonkeys.syntheticapi.services.CustomerService;
 import com.agilemonkeys.syntheticapi.services.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class CustomerControllerTests {
@@ -35,6 +41,9 @@ class CustomerControllerTests {
 
     @Mock
     private FileService fileService;
+
+    @Mock
+    private CustomerDtoConverter customerDtoConverter;
 
     @InjectMocks
     private CustomerController customerController;
@@ -51,9 +60,14 @@ class CustomerControllerTests {
         customer.setName("John");
         customer.setSurname("Doe");
 
-        when(customerService.getCustomers()).thenReturn(Collections.singletonList(customer));
+        CustomerDto customerDto = new CustomerDto();
+        customerDto.setName("John");
+        customerDto.setSurname("Doe");
 
-        ResponseEntity<List<Customer>> response = customerController.getAllCustomers();
+        when(customerService.getCustomers()).thenReturn(Collections.singletonList(customer));
+        when(customerDtoConverter.convertToDto(customer)).thenReturn(customerDto);
+
+        ResponseEntity<List<CustomerDto>> response = customerController.getAllCustomers();
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
@@ -68,9 +82,15 @@ class CustomerControllerTests {
         customer.setName("John");
         customer.setSurname("Doe");
 
-        when(customerService.getCustomerById(1L)).thenReturn(customer);
+        CustomerDto customerDto = new CustomerDto();
+        customer.setId(1L);
+        customerDto.setName("John");
+        customerDto.setSurname("Doe");
 
-        ResponseEntity<Customer> response = customerController.getCustomerById(1L);
+        when(customerService.getCustomerById(1L)).thenReturn(customer);
+        when(customerDtoConverter.convertToDto(customer)).thenReturn(customerDto);
+
+        ResponseEntity<CustomerDto> response = customerController.getCustomerById(1L);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("John", response.getBody().getName());
@@ -81,46 +101,52 @@ class CustomerControllerTests {
     void testGetCustomerByIdNotFound() {
         when(customerService.getCustomerById(1L)).thenReturn(null);
 
-        ResponseEntity<Customer> response = customerController.getCustomerById(1L);
+        ResponseEntity<CustomerDto> response = customerController.getCustomerById(1L);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
-
 
     @Test
     void testSaveCustomerSimplified() {
         Customer customer = new Customer("John", "Doe", "1", "photo.jpg");
-        customer.setCreatedBy("user");
-        customer.setId(1L);
+        CustomerDto customerDto = new CustomerDto("John", "Doe", "1", "photo.jpg");
 
-        when(customerService.saveCustomer(any(Customer.class))).thenReturn(customer);
+        when(customerDtoConverter.convertToEntity(any(CustomerDto.class))).thenReturn(customer);
+        when(customerService.saveCustomer(customer)).thenReturn(customer);
+        when(customerDtoConverter.convertToDto(any(Customer.class))).thenReturn(customerDto);
 
-        Customer savedCustomer = customerService.saveCustomer(customer);
-        assertNotNull(savedCustomer);
-        assertEquals("John", savedCustomer.getName());
+        ResponseEntity<CustomerDto> response = customerController.saveCustomer("John", "Doe", "1", null);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("John", response.getBody().getName());
+        assertEquals("Doe", response.getBody().getSurname());
+        assertEquals("1", response.getBody().getCustomerId());
+        assertNull(null, response.getBody().getPhoto());
     }
-
 
     @Test
     void testUpdateCustomerSimplified() {
-        Customer customer = new Customer("John", "Doe", "2", "photo.jpg");
-        customer.setId(1L);
-        customer.setLastModifiedBy("user");
+        Customer customer = new Customer(1L, "John", "Doe", "1", "photo.jpg");
+        CustomerDto customerDto = new CustomerDto(1L, "John", "Doe", "1", "photo.jpg");
 
+        when(customerDtoConverter.convertToEntity(any(CustomerDto.class))).thenReturn(customer);
         when(customerService.updateCustomer(1L, customer)).thenReturn(customer);
+        when(customerDtoConverter.convertToDto(any(Customer.class))).thenReturn(customerDto);
 
-        Customer updatedCustomer = customerService.updateCustomer(1L, customer);
-
-        assertNotNull(updatedCustomer);
-        assertEquals("John", updatedCustomer.getName());
-        assertEquals("Doe", updatedCustomer.getSurname());
-        assertEquals("user", updatedCustomer.getLastModifiedBy());
+        ResponseEntity<CustomerDto> response = customerController.updateCustomer(1L, "John", "Doe", "1", null);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1L, response.getBody().getId());
+        assertEquals("John", response.getBody().getName());
+        assertEquals("Doe", response.getBody().getSurname());
+        assertEquals("1", response.getBody().getCustomerId());
+        assertNull(null, response.getBody().getPhoto());
     }
-
-
 
     @Test
     void testDeleteCustomer() {
-        Customer customer = new Customer();
+        Customer customer = new Customer(1L, "John", "Doe", "1", "photo.jpg");
+
+        when(customerService.getCustomerById(1L)).thenReturn(customer);
         customer.setId(1L);
         customer.setName("John");
         customer.setSurname("Doe");
@@ -135,11 +161,7 @@ class CustomerControllerTests {
     @Test
     public void testGetImage() throws IOException {
 
-        Customer customer = new Customer();
-        customer.setId(1L);
-        customer.setName("John");
-        customer.setSurname("Doe");
-        customer.setPhoto("photo.jpeg");
+        Customer customer = new Customer(1L, "John", "Doe", "1", "photo.jpg");
 
         Path imagePath = Paths.get(FileService.IMAGE_DIR, customer.getPhoto());
         byte[] imageBytes = "image content".getBytes();
@@ -167,12 +189,8 @@ class CustomerControllerTests {
     @Test
     public void testUpdateImage() throws IOException {
 
-        Customer customer = new Customer();
-        customer.setId(1L);
-        customer.setName("John");
-        customer.setSurname("Doe");
-        customer.setPhoto("photo.jpg");
-
+        Customer customer = new Customer(1L, "John", "Doe", "1", "photo.jpg");
+        CustomerDto customerDto = new CustomerDto(1L, "John", "Doe", "1", "photo.jpg");
 
         MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", "image content".getBytes());
         String fileName = "photo.jpg";
@@ -180,11 +198,12 @@ class CustomerControllerTests {
         when(customerService.getCustomerById(1L)).thenReturn(customer);
         when(fileService.saveImage(file)).thenReturn(fileName);
         when(customerService.saveCustomer(any(Customer.class))).thenReturn(customer);
+        when(customerDtoConverter.convertToDto(customer)).thenReturn(customerDto);
 
-        ResponseEntity<Customer> response = customerController.updateImage(1L, file);
+        ResponseEntity<CustomerDto> response = customerController.updateImage(1L, file);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(customer, response.getBody());
+        assertEquals(customerDto, response.getBody());
         verify(customerService).saveCustomer(customer);
     }
 
@@ -194,7 +213,7 @@ class CustomerControllerTests {
 
         when(customerService.getCustomerById(1L)).thenReturn(null);
 
-        ResponseEntity<Customer> response = customerController.updateImage(1L, file);
+        ResponseEntity<CustomerDto> response = customerController.updateImage(1L, file);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
@@ -202,11 +221,7 @@ class CustomerControllerTests {
     @Test
     public void testDeleteImage() throws IOException {
 
-        Customer customer = new Customer();
-        customer.setId(1L);
-        customer.setName("John");
-        customer.setSurname("Doe");
-        customer.setPhoto("photo.jpg");
+        Customer customer = new Customer(1L, "John", "Doe", "1", "photo.jpg");
 
         Path imagePath = Paths.get(FileService.IMAGE_DIR, customer.getPhoto());
 

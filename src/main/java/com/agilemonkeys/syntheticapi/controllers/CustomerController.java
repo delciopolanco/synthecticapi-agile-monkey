@@ -1,12 +1,12 @@
 package com.agilemonkeys.syntheticapi.controllers;
 
+import com.agilemonkeys.syntheticapi.converters.CustomerDtoConverter;
+import com.agilemonkeys.syntheticapi.dtos.CustomerDto;
 import com.agilemonkeys.syntheticapi.entities.Customer;
 import com.agilemonkeys.syntheticapi.services.CustomerService;
 import com.agilemonkeys.syntheticapi.services.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(path = "api/v1/customer")
@@ -25,35 +26,36 @@ public class CustomerController {
 
     private final CustomerService customerService;
     private final FileService fileService;
+    private final CustomerDtoConverter customerDtoConverter;
 
     @Autowired
-    public CustomerController(CustomerService customerService, FileService fileService) {
+    public CustomerController(CustomerService customerService, FileService fileService,
+            CustomerDtoConverter customerDtoConverter) {
         this.customerService = customerService;
         this.fileService = fileService;
+        this.customerDtoConverter = customerDtoConverter;
     }
 
     @GetMapping
-    public ResponseEntity<List<Customer>> getAllCustomers() {
-        List<Customer> customers = customerService.getCustomers();
+    public ResponseEntity<List<CustomerDto>> getAllCustomers() {
+        List<CustomerDto> customers = customerService.getCustomers().stream().map(customerDtoConverter::convertToDto)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(customers);
     }
 
-
     @GetMapping(path = "{customerId}")
-    public ResponseEntity<Customer> getCustomerById(@PathVariable("customerId") Long id) {
+    public ResponseEntity<CustomerDto> getCustomerById(@PathVariable("customerId") Long id) {
         Customer customer = customerService.getCustomerById(id);
-        return customer != null ? ResponseEntity.ok(customer) : ResponseEntity.notFound().build();
+        return customer != null ? ResponseEntity.ok(customerDtoConverter.convertToDto(customer))
+                : ResponseEntity.notFound().build();
     }
 
-
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Customer> saveCustomer(
+    public ResponseEntity<CustomerDto> saveCustomer(
             @Validated @RequestParam("name") String name,
             @Validated @RequestParam("surname") String surname,
             @Validated @RequestParam("customerId") String customerId,
             @RequestParam(value = "photo", required = false) MultipartFile photo) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserName = authentication.getName();
 
         String fileName = null;
         if (photo != null && !photo.isEmpty()) {
@@ -64,29 +66,23 @@ public class CustomerController {
             }
         }
 
-        Customer customer = new Customer();
-        customer.setName(name);
-        customer.setSurname(surname);
-        customer.setCustomerId(customerId);
-        customer.setCreatedBy(currentUserName);
+        Customer customer = new Customer(name, surname, customerId);
 
         if (fileName != null) {
             customer.setPhoto(fileName);
         }
         Customer savedCustomer = customerService.saveCustomer(customer);
-        return ResponseEntity.status(201).body(savedCustomer);
+        return ResponseEntity.status(201).body(customerDtoConverter.convertToDto(savedCustomer));
     }
 
-    
-    @PutMapping(path="{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Customer> updateCustomer(
+    @PutMapping(path = "{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CustomerDto> updateCustomer(
             @PathVariable("id") Long id,
             @Validated @RequestParam("name") String name,
             @Validated @RequestParam("surname") String surname,
             @Validated @RequestParam("customerId") String customerId,
             @RequestParam(value = "photo", required = false) MultipartFile photo) {
 
-
         String fileName = null;
         if (photo != null && !photo.isEmpty()) {
             try {
@@ -96,16 +92,10 @@ public class CustomerController {
             }
         }
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUserName = authentication.getName();
-
         Customer customer = new Customer(name, surname, customerId, fileName);
-        customer.setLastModifiedBy(currentUserName);
-
         Customer updatedCustomer = customerService.updateCustomer(id, customer);
-        return ResponseEntity.ok(updatedCustomer);
+        return ResponseEntity.ok(customerDtoConverter.convertToDto(updatedCustomer));
     }
-
 
     @DeleteMapping(path = "{customerId}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable("customerId") Long id) {
@@ -128,9 +118,9 @@ public class CustomerController {
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(imageBytes);
     }
 
-    @PutMapping(path="/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Customer> updateImage(@PathVariable Long id,
-                                                @RequestParam("file") MultipartFile file) throws IOException {
+    @PutMapping(path = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CustomerDto> updateImage(@PathVariable Long id,
+            @RequestParam("file") MultipartFile file) throws IOException {
         Customer customer = customerService.getCustomerById(id);
         if (customer == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -138,7 +128,7 @@ public class CustomerController {
         String fileName = fileService.saveImage(file);
         customer.setPhoto(fileName);
         Customer updatedCustomer = customerService.saveCustomer(customer);
-        return new ResponseEntity<>(updatedCustomer, HttpStatus.OK);
+        return new ResponseEntity<>(customerDtoConverter.convertToDto(updatedCustomer), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}/image")

@@ -28,4 +28,9 @@ public class User extends BaseEntity {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     private Set<Roles> roles = Set.of(Roles.ROLE_USER);
+
+    public User(String name, String email) {
+        this.name = name;
+        this.email = email;
+    }
 }

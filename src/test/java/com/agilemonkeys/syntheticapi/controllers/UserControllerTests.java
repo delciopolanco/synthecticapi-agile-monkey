@@ -1,5 +1,7 @@
 package com.agilemonkeys.syntheticapi.controllers;
 
+import com.agilemonkeys.syntheticapi.converters.UserDtoConverter;
+import com.agilemonkeys.syntheticapi.dtos.UserDto;
 import com.agilemonkeys.syntheticapi.entities.User;
 import com.agilemonkeys.syntheticapi.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +22,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class UserControllerTests {
@@ -28,6 +32,9 @@ public class UserControllerTests {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private UserDtoConverter userDtoConverter;
 
     @InjectMocks
     private UserController userController;
@@ -50,9 +57,14 @@ public class UserControllerTests {
         user.setName("Alice");
         user.setEmail("alice@example.com");
 
-        when(userService.getAllUsers()).thenReturn(Collections.singletonList(user));
+        UserDto userDto = new UserDto();
+        userDto.setName("Alice");
+        userDto.setEmail("alice@example.com");
 
-        ResponseEntity<List<User>> response = userController.listUsers();
+        when(userService.getAllUsers()).thenReturn(Collections.singletonList(user));
+        when(userDtoConverter.convertToDto(user)).thenReturn(userDto);
+
+        ResponseEntity<List<UserDto>> response = userController.listUsers();
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(1, response.getBody().size());
@@ -67,9 +79,14 @@ public class UserControllerTests {
         user.setName("Alice");
         user.setEmail("alice@example.com");
 
-        when(userService.getUserById(1L)).thenReturn(user);
+        UserDto userDto = new UserDto();
+        userDto.setName("Alice");
+        userDto.setEmail("alice@example.com");
 
-        ResponseEntity<User> response = userController.getUserById(1L);
+        when(userService.getUserById(1L)).thenReturn(user);
+        when(userDtoConverter.convertToDto(user)).thenReturn(userDto);
+
+        ResponseEntity<UserDto> response = userController.getUserById(1L);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Alice", response.getBody().getName());
@@ -77,14 +94,28 @@ public class UserControllerTests {
     }
 
     @Test
+    void testGetUserByIdNotFound() {
+        when(userService.getUserById(1L)).thenReturn(null);
+
+        ResponseEntity<UserDto> response = userController.getUserById(1L);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
     void testSaveUser() {
+        UserDto userDto = new UserDto();
+        userDto.setName("Alice");
+        userDto.setEmail("alice@example.com");
+
         User user = new User();
         user.setName("Alice");
         user.setEmail("alice@example.com");
 
+        when(userDtoConverter.convertToEntity(any(UserDto.class))).thenReturn(user);
         when(userService.createUser(any(User.class))).thenReturn(user);
+        when(userDtoConverter.convertToDto(any(User.class))).thenReturn(userDto);
 
-        ResponseEntity<User> response = userController.createUser(user);
+        ResponseEntity<UserDto> response = userController.createUser(userDto);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Alice", response.getBody().getName());
@@ -93,14 +124,20 @@ public class UserControllerTests {
 
     @Test
     void testUpdateUser() {
+        UserDto userDto = new UserDto();
+        userDto.setName("Alice");
+        userDto.setEmail("alice@example.com");
+
         User user = new User();
         user.setId(1L);
         user.setName("Alice");
         user.setEmail("alice@example.com");
 
-        when(userService.updateUser(any(Long.class), any(User.class))).thenReturn(user);
+        when(userDtoConverter.convertToEntity(any(UserDto.class))).thenReturn(user);
+        when(userService.updateUser(eq(1L), any(User.class))).thenReturn(user);
+        when(userDtoConverter.convertToDto(any(User.class))).thenReturn(userDto);
 
-        ResponseEntity<User> response = userController.updateUser(1L, user);
+        ResponseEntity<UserDto> response = userController.updateUser(1L, userDto);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals("Alice", response.getBody().getName());
@@ -109,11 +146,6 @@ public class UserControllerTests {
 
     @Test
     void testDeleteUser() {
-        User user = new User();
-        user.setId(1L);
-        user.setName("Alice");
-        user.setEmail("alice@example.com");
-
         doNothing().when(userService).deleteUser(1L);
 
         ResponseEntity<Void> response = userController.deleteUser(1L);

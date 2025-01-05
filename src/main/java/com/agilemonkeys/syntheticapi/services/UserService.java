@@ -5,6 +5,8 @@ import com.agilemonkeys.syntheticapi.entities.User;
 import com.agilemonkeys.syntheticapi.repositories.UserRepository;
 import com.agilemonkeys.syntheticapi.utils.UserNotFoundExceptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -33,16 +35,24 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        return userRepository.save(user);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserName = authentication.getName();
+
+        User createdUser = userRepository.save(user);
+        createdUser.setCreatedBy(currentUserName);
+        return createdUser;
     }
 
     public User updateUser(Long id, User userDetails) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUserName = authentication.getName();
+
         User existingUser = getUserById(id);
         if (existingUser != null) {
             existingUser.setEmail(userDetails.getEmail());
             existingUser.setName(userDetails.getName());
             existingUser.setRoles(userDetails.getRoles());
-            existingUser.setLastModifiedBy(userDetails.getLastModifiedBy());
+            existingUser.setLastModifiedBy(currentUserName);
             return userRepository.save(existingUser);
         }
         return null;
